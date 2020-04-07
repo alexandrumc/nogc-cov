@@ -1,0 +1,12 @@
+{
+	"authors": [
+		"Alexandru Militaru"
+	],
+	"copyright": "Copyright © 2020, Alexandru Militaru",
+	"dependencies": {
+		"dmd": "~master"
+	},
+	"description": "Are we @nogc yet?",
+	"license": "proprietary",
+	"name": "nogc-coverage"
+}

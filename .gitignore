@@ -1,0 +1,15 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/nogc-coverage
+nogc-coverage.so
+nogc-coverage.dylib
+nogc-coverage.dll
+nogc-coverage.a
+nogc-coverage.lib
+nogc-coverage-test-*
+*.exe
+*.o
+*.obj
+*.lst
