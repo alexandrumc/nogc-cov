@@ -37,7 +37,6 @@ extern(C++) class NogcCoverageVisitor : SemanticTimeTransitiveVisitor
     {
         this.sc = sc;
         this.insideUnittest = false;
-        this.fileName = "TODO";
     }
 
     override void visit(UnitTestDeclaration ud)
@@ -92,18 +91,25 @@ extern(C++) class NogcCoverageVisitor : SemanticTimeTransitiveVisitor
 void nogcCoverageCheck(Dsymbol dsym, Scope* sc)
 {
     scope v = new NogcCoverageVisitor(sc);
+    v.fileName = dsym.ident.toString().idup;
     dsym.accept(v);
 }
 
 
 void initTool(string[] versionIdentifiers, string[] importPaths)
 {
-    initDMD(null, versionIdentifiers);
+    //Global.params must be set *before* initDMD();
     global.params.isLinux = true;
     global.params.is64bit = (size_t.sizeof == 8);
     global.params.useUnitTests = true;
 
-    findImportPaths().each!addImport;
+    initDMD(null, versionIdentifiers);
+
+    /*
+    Import paths should be added using addImport()
+    because findImportPaths() might lead to conflicts
+    between /usr/bin/phobos and /dlang/phobos
+    */
     importPaths.each!addImport;
 }
 
@@ -171,6 +177,7 @@ void main(string[] args)
     initTool(versionIdentifiers, importPaths);
 
     auto test = parseModule("kk.d", q{
+            module std.kk;
             version(StdUnittest)
                 enum a = 1;
             else
@@ -182,8 +189,7 @@ void main(string[] args)
                 static assert(a == 1);
                 static assert(equal(iota(0, 3, 1), [0, 1, 2]));
 
-                //TODO : the problem; package?
-                //import std.exception : assertCTFEable;
+                import std.exception : assertCTFEable;
             });
 
     assert(!test.diagnostics.hasErrors);

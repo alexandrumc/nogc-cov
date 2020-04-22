@@ -13,7 +13,7 @@ import other;
 
 @nogc unittest
 {
-    hello(1, 2);
+    sum(19, 20);
 }
 
 @nogc unittest
