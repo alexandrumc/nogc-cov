@@ -102,6 +102,8 @@ void initTool(string[] versionIdentifiers, string[] importPaths)
     global.params.isLinux = true;
     global.params.is64bit = (size_t.sizeof == 8);
     global.params.useUnitTests = true;
+    global.params.useDIP25 = true;
+    global.params.vsafe = true;
 
     initDMD(null, versionIdentifiers);
 
