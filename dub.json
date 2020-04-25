@@ -3,10 +3,25 @@
 		"Alexandru Militaru"
 	],
 	"copyright": "Copyright © 2020, Alexandru Militaru",
-	"dependencies": {
-		"dmd": "~master"
-	},
 	"description": "Are we @nogc yet?",
 	"license": "proprietary",
-	"name": "nogc-coverage"
+	"name": "nogcov",
+    "targetType": "none",
+    "subPackages": [
+        {
+            "name": "master",
+            "targetType": "executable",
+            "sourceFiles": ["source/master.d"],
+            "excludedSourceFiles": ["source/worker.d"]
+        },
+        {
+            "name": "worker",
+            "targetType": "executable",
+            "sourceFiles": ["source/worker.d"],
+            "excludedSourceFiles": ["source/master.d"],
+            "dependencies": {
+                "dmd": "~master"
+            }
+        }
+    ]
 }

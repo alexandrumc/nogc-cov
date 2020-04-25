@@ -1,4 +1,4 @@
-module app;
+module worker;
 
 import dmd.parse;
 import dmd.visitor;
@@ -154,27 +154,15 @@ void checkNogcCoverage(Modules *modules)
 
 void main(string[] args)
 {
-    string fname;
+    string path;
     Modules modules;
     string[] importPaths;
     string[] versionIdentifiers = ["StdUnittest", "CoreUnittest"];
 
-    if (args.length < 3)
-    {
-        writeln("Please provide path to file or directory and import path");
-        return;
-    }
-    else
-    {
-        fname = args[1];
-        if (!exists(fname))
-        {
-            error(Loc.initial, "Invalid path");
-            return;
-        }
-        for (int i = 2; i < args.length; i++)
-            importPaths ~= args[i];
-    }
+    path = args[1];
+
+    for (int i = 2; i < args.length; i++)
+        importPaths ~= args[i];
 
     initTool(versionIdentifiers, importPaths);
 
@@ -201,7 +189,7 @@ void main(string[] args)
 
     assert(global.errors == 0);
 
-    modules = prepareModules(fname);
+    modules = prepareModules(path);
 
     checkNogcCoverage(&modules);
 
