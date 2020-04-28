@@ -4,6 +4,7 @@ import std.process;
 import std.file;
 import std.stdio;
 import std.path;
+import std.algorithm;
 
 
 void main(string[] args)
@@ -12,7 +13,6 @@ void main(string[] args)
     string[] importPaths;
     string[] params;
     string[] versionIdentifiers = ["StdUnittest", "CoreUnittest"];
-    Pid[] procPids;
 
     if (args.length < 3)
     {
@@ -31,9 +31,14 @@ void main(string[] args)
             importPaths ~= args[i];
     }
 
+    if (exists("results"))
+        rmdirRecurse("results");
+
+    mkdir("results");
+
     if(isDir(path))
     {
-        auto dFiles = dirEntries(path, SpanMode.depth);
+        auto dFiles = dirEntries(path, "*.d", SpanMode.depth);
         foreach (d; dFiles)
         {
             params = [];
@@ -41,16 +46,14 @@ void main(string[] args)
             params ~= d.name;
             params ~= importPaths;
             auto worker = spawnProcess(params);
-            procPids ~= worker;
-        }
-        foreach(worker; procPids)
-        {
             if (wait(worker) != 0)
                     writeln("Analysis failed!");
         }
     }
     else if(isFile(path))
     {
+        if (!endsWith(path, ".d"))
+            return;
         params ~= "./nogcov_worker";
         params ~= path;
         params ~= importPaths;

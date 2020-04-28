@@ -26,12 +26,15 @@ import std.stdio;
 import std.algorithm;
 import std.path;
 
+string resultsDir = "results/";
+
 extern(C++) class NogcCoverageVisitor : SemanticTimeTransitiveVisitor
 {
     alias visit = SemanticTimeTransitiveVisitor.visit;
     Scope* sc;
     bool insideUnittest;
     string fileName;
+    File output;
 
     this(Scope* sc)
     {
@@ -57,20 +60,23 @@ extern(C++) class NogcCoverageVisitor : SemanticTimeTransitiveVisitor
         Dsymbol sym;
         if (insideUnittest)
         {
-            writeln("\n", fileName, "(", ce.loc.linnum, "): FuncCall in @nogc unittest: ", ce.f);
             FuncDeclaration fd = ce.f;
-            TypeFunction tf = fd.type.toTypeFunction();
-            if (fd.parent.isTemplateInstance())
+            if (fd !is null)
             {
-                writeln("\t|\n\t|-------->TemplateInstance called: ", fd.parent);
-                writeln("\t|\n\t|-------->TemplateInstance header: ", tf);
-                TemplateDeclaration td = getFuncTemplateDecl(fd);
-                writeln("\t\t|\n\t\t|-------->TemplateDeclaration used: ", td);
-            }
-            else
-            {
-                writeln("\t|\n\t|-------->Function called: ", fd, " ", tf);
-                writeln("\t|\n\t|-------->Function called: ", fd, " ");
+                output.writeln("\n", fileName, "(", ce.loc.linnum, "): FuncCall in @nogc unittest: ", ce.f);
+                TypeFunction tf = fd.type.toTypeFunction();
+                if (fd.parent.isTemplateInstance())
+                {
+                    output.writeln("\t|\n\t|-------->TemplateInstance called: ", fd.parent);
+                    output.writeln("\t|\n\t|-------->TemplateInstance header: ", tf);
+                    TemplateDeclaration td = getFuncTemplateDecl(fd);
+                    output.writeln("\t\t|\n\t\t|-------->TemplateDeclaration used: ", td);
+                }
+                else
+                {
+                    output.writeln("\t|\n\t|-------->Function called: ", fd, " ", tf);
+                    output.writeln("\t|\n\t|-------->Function called: ", fd, " ");
+                }
             }
         }
     }
@@ -78,13 +84,13 @@ extern(C++) class NogcCoverageVisitor : SemanticTimeTransitiveVisitor
     override void visit(TemplateInstance ti)
     {
         if (insideUnittest)
-            writeln(ti.loc.linnum, ": TemplateInstance: ", ti);
+            output.writeln(ti.loc.linnum, ": TemplateInstance: ", ti);
     }
 
     override void visit(DotTemplateInstanceExp dtie)
     {
         if (insideUnittest)
-            writeln("DotTemplate :", dtie);
+            output.writeln("DotTemplate :", dtie);
     }
 }
 
@@ -92,6 +98,7 @@ void nogcCoverageCheck(Dsymbol dsym, Scope* sc)
 {
     scope v = new NogcCoverageVisitor(sc);
     v.fileName = dsym.ident.toString().idup;
+    v.output = File(resultsDir ~ v.fileName, "a");
     dsym.accept(v);
 }
 
