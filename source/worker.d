@@ -166,29 +166,6 @@ void main(string[] args)
 
     initTool(versionIdentifiers, importPaths);
 
-    auto test = parseModule("kk.d", q{
-            module std.kk;
-            version(StdUnittest)
-                enum a = 1;
-            else
-                enum a = 2;
-
-                import std.range : iota;
-                import std.algorithm.comparison : equal;
-
-                static assert(a == 1);
-                static assert(equal(iota(0, 3, 1), [0, 1, 2]));
-
-                import std.exception : assertCTFEable;
-            });
-
-    assert(!test.diagnostics.hasErrors);
-    assert(!test.diagnostics.hasWarnings);
-
-    test.module_.fullSemantic();
-
-    assert(global.errors == 0);
-
     modules = prepareModules(path);
 
     checkNogcCoverage(&modules);
