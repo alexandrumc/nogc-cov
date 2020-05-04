@@ -25,6 +25,7 @@ import std.range;
 import std.stdio;
 import std.algorithm;
 import std.path;
+import std.json;
 
 string resultsDir = "results/";
 
@@ -34,7 +35,7 @@ extern(C++) class NogcCoverageVisitor : SemanticTimeTransitiveVisitor
     Scope* sc;
     bool insideUnittest;
     string fileName;
-    File output;
+    string[][string] funcDict;
 
     this(Scope* sc)
     {
@@ -63,34 +64,33 @@ extern(C++) class NogcCoverageVisitor : SemanticTimeTransitiveVisitor
             FuncDeclaration fd = ce.f;
             if (fd !is null)
             {
-                output.writeln("\n", fileName, "(", ce.loc.linnum, "): FuncCall in @nogc unittest: ", ce.f);
                 TypeFunction tf = fd.type.toTypeFunction();
-                if (fd.parent.isTemplateInstance())
+                if (!fd.isCtorDeclaration() && fd.parent.isTemplateInstance())
                 {
-                    output.writeln("\t|\n\t|-------->TemplateInstance called: ", fd.parent);
-                    output.writeln("\t|\n\t|-------->TemplateInstance header: ", tf);
                     TemplateDeclaration td = getFuncTemplateDecl(fd);
-                    output.writeln("\t\t|\n\t\t|-------->TemplateDeclaration used: ", td);
-                }
-                else
-                {
-                    output.writeln("\t|\n\t|-------->Function called: ", fd, " ", tf);
-                    output.writeln("\t|\n\t|-------->Function called: ", fd, " ");
+                    if (td !is null)
+                    {
+                        string funcName = fd.toString().idup();
+                        string tdName = td.toString().idup();
+                        if (funcName in funcDict)
+                        {
+                            bool isInside = false;
+                            foreach (tempHeader; funcDict[funcName])
+                            {
+                                if (tempHeader == tdName)
+                                    isInside = true;
+                            }
+                            if (!isInside)
+                                funcDict[funcName] ~= tdName;
+                        }
+                        else
+                        {
+                            funcDict[funcName] = [tdName];
+                        }
+                    }
                 }
             }
         }
-    }
-
-    override void visit(TemplateInstance ti)
-    {
-        if (insideUnittest)
-            output.writeln(ti.loc.linnum, ": TemplateInstance: ", ti);
-    }
-
-    override void visit(DotTemplateInstanceExp dtie)
-    {
-        if (insideUnittest)
-            output.writeln("DotTemplate :", dtie);
     }
 }
 
@@ -98,8 +98,11 @@ void nogcCoverageCheck(Dsymbol dsym, Scope* sc)
 {
     scope v = new NogcCoverageVisitor(sc);
     v.fileName = dsym.ident.toString().idup;
-    v.output = File(resultsDir ~ v.fileName, "a");
+    auto f = File(resultsDir ~ v.fileName, "a");
     dsym.accept(v);
+    auto j = JSONValue(v.funcDict);
+    f.writeln(j.toPrettyString);
+    f.close();
 }
 
 
