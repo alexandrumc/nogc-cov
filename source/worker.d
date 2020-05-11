@@ -19,6 +19,7 @@ import dmd.dtemplate;
 import dmd.errors;
 import dmd.arraytypes;
 import dmd.mtype;
+import dmd.root.outbuffer;
 
 import std.file;
 import std.range;
@@ -34,7 +35,6 @@ extern(C++) class NogcCoverageVisitor : SemanticTimeTransitiveVisitor
     alias visit = SemanticTimeTransitiveVisitor.visit;
     Scope* sc;
     bool insideUnittest;
-    string fileName;
     string[][string] funcDict;
 
     this(Scope* sc)
@@ -96,10 +96,14 @@ extern(C++) class NogcCoverageVisitor : SemanticTimeTransitiveVisitor
 
 void nogcCoverageCheck(Dsymbol dsym, Scope* sc)
 {
+    OutBuffer buf;
+    Module m = cast(Module)dsym;
+    m.fullyQualifiedName(buf);
+    auto f = File(resultsDir ~ buf.extractSlice(), "a");
+
     scope v = new NogcCoverageVisitor(sc);
-    v.fileName = dsym.ident.toString().idup;
-    auto f = File(resultsDir ~ v.fileName, "a");
     dsym.accept(v);
+
     auto j = JSONValue(v.funcDict);
     f.writeln(j.toPrettyString);
     f.close();
