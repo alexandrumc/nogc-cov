@@ -22,6 +22,7 @@ import dmd.mtype;
 import dmd.root.outbuffer;
 
 import std.file;
+import std.string;
 import std.range;
 import std.stdio;
 import std.algorithm;
@@ -36,6 +37,7 @@ extern(C++) class NogcCoverageVisitor : SemanticTimeTransitiveVisitor
     Scope* sc;
     bool insideUnittest;
     string[][string] funcDict;
+    JSONValue jv;
 
     this(Scope* sc)
     {
@@ -72,20 +74,41 @@ extern(C++) class NogcCoverageVisitor : SemanticTimeTransitiveVisitor
                     {
                         string funcName = fd.toString().idup();
                         string tdName = td.toString().idup();
-                        if (funcName in funcDict)
+                        if ("members" !in jv)
                         {
-                            bool isInside = false;
-                            foreach (tempHeader; funcDict[funcName])
-                            {
-                                if (tempHeader == tdName)
-                                    isInside = true;
-                            }
-                            if (!isInside)
-                                funcDict[funcName] ~= tdName;
+                            JSONValue jj = JSONValue(["fname" : funcName]);
+                            jj.object["signatures"] = [JSONValue(["form" : tdName])];
+
+                            jv.object["members"] = [jj];
                         }
                         else
                         {
-                            funcDict[funcName] = [tdName];
+                            bool insideMembers = false;
+                            foreach (ref jval; jv["members"].array)
+                            {
+                                if (jval["fname"].str == funcName)
+                                {
+                                    insideMembers = true;
+                                    bool insideSignatures = false;
+                                    foreach(jjval; jval["signatures"].array)
+                                    {
+                                        if (jjval["form"].str == tdName)
+                                            insideSignatures = true;
+                                    }
+                                    if (!insideSignatures)
+                                    {
+                                        jval["signatures"].array ~= JSONValue(["form" : tdName]);
+                                    }
+                                    break;
+                                }
+                            }
+                            if (!insideMembers)
+                            {
+                                JSONValue jj = JSONValue(["fname" : funcName]);
+                                jj.object["signatures"] = [JSONValue(["form" : tdName])];
+
+                                jv["members"].array ~= jj;
+                            }
                         }
                     }
                 }
@@ -99,13 +122,20 @@ void nogcCoverageCheck(Dsymbol dsym, Scope* sc)
     OutBuffer buf;
     Module m = cast(Module)dsym;
     m.fullyQualifiedName(buf);
-    auto f = File(resultsDir ~ buf.extractSlice(), "a");
+
+    string fullName = buf.extractSlice();
+
+    auto f = File(resultsDir ~ fullName ~ ".json", "a");
+
+    JSONValue jv = JSONValue(["name" : fullName]);
 
     scope v = new NogcCoverageVisitor(sc);
+    v.jv = jv;
     dsym.accept(v);
 
-    auto j = JSONValue(v.funcDict);
-    f.writeln(j.toPrettyString);
+    jv.object["file"] = JSONValue(fullName.replace(".", "/") ~ ".d");
+
+    f.writeln(v.jv.toPrettyString(JSONOptions.doNotEscapeSlashes));
     f.close();
 }
 
