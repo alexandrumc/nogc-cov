@@ -5,6 +5,7 @@ import std.file;
 import std.stdio;
 import std.path;
 import std.algorithm;
+import std.json;
 
 
 void main(string[] args)
@@ -13,6 +14,8 @@ void main(string[] args)
     string[] importPaths;
     string[] params;
     string[] versionIdentifiers = ["StdUnittest", "CoreUnittest"];
+    JSONValue json;
+    json.array = [];
 
     if (args.length < 3)
     {
@@ -45,9 +48,10 @@ void main(string[] args)
             params ~= "./nogcov_worker";
             params ~= d.name;
             params ~= importPaths;
-            auto worker = spawnProcess(params);
-            if (wait(worker) != 0)
+            auto worker = execute(params, null, Config.stderrPassThrough);
+            if (worker.status != 0)
                     writeln("Analysis failed!");
+            json.array ~= parseJSON(worker.output);
         }
     }
     else if(isFile(path))
@@ -57,8 +61,12 @@ void main(string[] args)
         params ~= "./nogcov_worker";
         params ~= path;
         params ~= importPaths;
-        auto worker = spawnProcess(params);
-        if (wait(worker) != 0)
+        auto worker = execute(params, null, Config.stderrPassThrough);
+        if (worker.status != 0)
                 writeln("Analysis failed!");
+        json.array ~= parseJSON(worker.output);
     }
+
+    auto f = File("combined.json", "w");
+    f.writeln(json.toPrettyString(JSONOptions.doNotEscapeSlashes));
 }

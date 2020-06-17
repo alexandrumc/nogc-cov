@@ -134,6 +134,9 @@ void nogcCoverageCheck(Dsymbol dsym, Scope* sc)
     dsym.accept(v);
 
     jv.object["file"] = JSONValue(fullName.replace(".", "/") ~ ".d");
+    jv.object["kind"] = JSONValue("module");
+
+    writeln(v.jv.toPrettyString(JSONOptions.doNotEscapeSlashes));
 
     f.writeln(v.jv.toPrettyString(JSONOptions.doNotEscapeSlashes));
     f.close();
@@ -172,7 +175,6 @@ Modules prepareModules(string path)
         auto dFiles = dirEntries(path, SpanMode.depth);
         foreach (d; dFiles)
         {
-            writeln(d.name);
             Module m = parseModule(d.name).module_;
             fullSemantic(m);
             modules.push(m);

@@ -8,6 +8,13 @@ master:
 
 clean:
 	rm -rf nogcov_* results/
+	rm -rf combined.json
+
+run_phobos:
+	./nogcov_master ../phobos/std/ ../phobos/ ../druntime/import/
+
+run_test:
+	./nogcov_master tests/ tests/ ../druntime/import/
 
 tutorial:
 	@echo "Run: ./nogcov_master target target_imports druntimeImports \n\n \
