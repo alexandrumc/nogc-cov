@@ -22,6 +22,12 @@
             "dependencies": {
                 "dmd": "~master"
             }
+        },
+        {
+            "name": "translator",
+            "targetType": "executable",
+            "sourceFiles": ["source/translator.d"],
+            "excludedSourceFiles": ["source/master.d", "source/worker.d"]
         }
     ]
 }

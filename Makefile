@@ -6,6 +6,9 @@ worker:
 master:
 	dub build nogcov:master
 
+translator:
+	dub build nogcov:translator
+
 clean:
 	rm -rf nogcov_* results/
 	rm -rf combined.json
