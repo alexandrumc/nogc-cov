@@ -12,13 +12,13 @@
             "name": "master",
             "targetType": "executable",
             "sourceFiles": ["source/master.d"],
-            "excludedSourceFiles": ["source/worker.d"]
+            "excludedSourceFiles": ["source/worker.d", "source/translator.d"]
         },
         {
             "name": "worker",
             "targetType": "executable",
             "sourceFiles": ["source/worker.d"],
-            "excludedSourceFiles": ["source/master.d"],
+            "excludedSourceFiles": ["source/master.d", "source/translator.d"],
             "dependencies": {
                 "dmd": "~master"
             }
