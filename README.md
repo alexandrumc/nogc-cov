@@ -1,4 +1,6 @@
 The project should be cloned in dlang/
 
-> ls dlang/
+```console
+user@empire:~$ ls dlang/
 dmd druntime nogc-cov phobos
+```
