@@ -8,6 +8,7 @@ import dmd.errors;
 import dmd.dscope;
 import dmd.dsymbol;
 import dmd.globals;
+import dmd.target;
 import dmd.identifier;
 import dmd.id;
 import dmd.dmodule;
@@ -145,12 +146,12 @@ void nogcCoverageCheck(Dsymbol dsym, Scope* sc)
 
 void initTool(string[] versionIdentifiers, string[] importPaths)
 {
+    auto enabled = FeatureState.enabled;
     //Global.params must be set *before* initDMD();
-    global.params.isLinux = true;
-    global.params.is64bit = (size_t.sizeof == 8);
+    target.os = Target.OS.linux;
     global.params.useUnitTests = true;
-    global.params.useDIP25 = true;
-    global.params.vsafe = true;
+    global.params.useDIP25 = enabled;
+    global.params.useDIP1000 = enabled;
 
     initDMD(null, versionIdentifiers);
 
