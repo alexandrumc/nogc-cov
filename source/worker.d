@@ -20,7 +20,7 @@ import dmd.dtemplate;
 import dmd.errors;
 import dmd.arraytypes;
 import dmd.mtype;
-import dmd.root.outbuffer;
+import dmd.common.outbuffer;
 
 import std.file;
 import std.string;
@@ -61,13 +61,11 @@ extern(C++) class NogcCoverageVisitor : SemanticTimeTransitiveVisitor
 
     override void visit(CallExp ce)
     {
-        Dsymbol sym;
         if (insideUnittest)
         {
             FuncDeclaration fd = ce.f;
             if (fd !is null)
             {
-                TypeFunction tf = fd.type.toTypeFunction();
                 if (!fd.isCtorDeclaration() && fd.parent.isTemplateInstance())
                 {
                     TemplateDeclaration td = getFuncTemplateDecl(fd);
@@ -153,7 +151,15 @@ void initTool(string[] versionIdentifiers, string[] importPaths)
     global.params.useDIP25 = enabled;
     global.params.useDIP1000 = enabled;
 
-    initDMD(null, versionIdentifiers);
+    /*
+    void initDMD(
+      DiagnosticHandler diagnosticHandler = null,
+      FatalErrorHandler fatalErrorHandler = null,
+      const string[] versionIdentifiers = [],
+      ContractChecks contractChecks = ContractChecks()
+    )
+    */
+    initDMD(null, null, versionIdentifiers);
 
     /*
     Import paths should be added using addImport()
